@@ -1,0 +1,37 @@
+format:
+  stage: check
+  image:
+    name: hashicorp/terraform:${TERRAFORM_IMAGE_VERSION}
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  script:
+    - terraform fmt -check -recursive -write=false -diff
+
+tflint:
+  stage: check
+  image:
+    name: ghcr.io/terraform-linters/tflint:${TFLINT_IMAGE_VERSION}
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  script:
+    # Get all folders with tf files inside and do tflint command
+    - |
+      find . -name '*.tf' -not -path '*.terraform*' | rev | cut -d'/' -f2- | rev \
+      | uniq \
+      | xargs -I {} sh -c "echo {}: && tflint -c tflint.hcl {}"
+
+checkov:
+  stage: check
+  image:
+    name: bridgecrew/checkov:${CHECKOV_IMAGE_VERSION}
+    entrypoint:
+      - "/usr/bin/env"
+      - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  script:
+    # Get all folders with tf files inside and do checkov command
+    - |
+      find . -name '*.tf' -not -path '*.terraform*' | rev | cut -d'/' -f2- | rev \
+      | uniq \
+      | xargs -I {} sh -c "echo {}: && checkov -d {}"

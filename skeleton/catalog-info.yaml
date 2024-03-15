@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+     backstage.io/techdocs-ref: dir:./docs
+spec:
+  type: service
+  owner: ${{ values.owner }}
+  lifecycle: experimental
+  providesApis:
+    - ${{ values.name }}
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+spec:
+  type: internal
+  lifecycle: experimental
+  owner: ${{ values.owner }}
+  definition: "${{ values.description }}"

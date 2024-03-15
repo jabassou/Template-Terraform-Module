@@ -1,0 +1,10 @@
+include:
+  - 'ci/check.gitlab-ci.yml'
+
+variables:
+  TERRAFORM_IMAGE_VERSION: 1.4.2
+  TFLINT_IMAGE_VERSION: v0.45.0
+  CHECKOV_IMAGE_VERSION: 2.3.96
+
+stages:
+  - check

@@ -1,0 +1,105 @@
+# Utilisez ce template Backstage pour initialiser un module Terraform avec une structure standard.
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: terraform
+  title: Terraform-Module
+  description: Créez un nouveau module Terraform avec une structure de projet standard.
+  tags:
+    - terraform
+    - module
+spec:
+  owner: jamel.abassou
+  type: service
+  lifecycle: experimental
+
+  # Paramètres requis et optionnels pour personnaliser le module Terraform généré.
+  parameters:
+    - title: Informations de base
+      required:  
+        - name
+        - description
+        - visibility
+      # Définition des propriétés pour chaque champ requis ou optionnel.
+      properties:
+        name:
+          title: Nom de l'application
+          type: string
+          description: Le nom unique de votre module Terraform
+          ui:autofocus: true
+          ui:options:
+            rows: 5
+        description:
+          title: Description
+          type: string
+          description: Une brève description de votre module Terraform
+        visibility:
+          title: visibilité souhaitée du projet
+          enum:
+            - public
+            - internal
+            - private
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: OwnerPicker
+
+    # Section pour choisir l'emplacement du dépôt de code source.
+    - title: Choose a location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          value: terraform-${{ parameters.provider }}-${{ parameters.name }}
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - gitlab.prod.aws.wescale.fr
+
+  # Les étapes à exécuter pour créer le module Terraform à partir de ce template.
+  steps:
+    - id: fetch-base
+      name: Récupérer le squelette de l'application
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          type: ${{ parameters.type }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          repo_name: ${{ (parameters.repoUrl | parseRepoUrl)["repo"] }}
+          repo_owner: ${{ (parameters.repoUrl | parseRepoUrl)["owner"] }}
+
+    # Deuxième étape : publier le projet dans un dépôt GitLab.
+    - id: publish
+      name: Publier le projet
+      action: publish:gitlab
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        allowedHosts: ['gitlab.prod.aws.wescale.fr']
+        description: Description du projet suivant - {{ parameters.name }}
+        defaultBranch: main
+        ci_config_path: .gitlab-ci.yml
+        requireCodeOwnerReviews: true
+        visibility: ${{ parameters.visibility }}
+
+    # Troisième étape : enregistrer le nouveau module Terraform dans le catalogue Backstage.
+    - id: register
+      name: Enregistrer dans le catalogue
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  # Liens à afficher à l'utilisateur après la création réussie du module Terraform.
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Ouvrir dans le catalogue
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

@@ -1,0 +1,9 @@
+download-external-modules: false
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+  - all
+quiet: true
+skip-check:
+- CKV_GCP_38 # Ensure VM disks for critical VMs are encrypted with Customer Supplied Encryption Keys (CSEK)
+skip-download: true
